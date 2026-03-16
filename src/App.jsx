@@ -2,11 +2,13 @@ import { useState, useEffect, useRef } from "react";
 import { Analytics, track } from "@vercel/analytics/react";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CONFIG — paste your Tally form IDs here (create free forms at tally.so)
-const TALLY_CANDIDATE_ID = "eqErLk";
-const TALLY_HIRING_ID    = "Me5aOk";
+// CONFIG
+// Formspree endpoints — create free forms at formspree.io
+// Steps: formspree.io → New Form → copy the endpoint ID (e.g. xpznkgvd)
+const FORMSPREE_CANDIDATE = "mnjggqya";
+const FORMSPREE_HIRING    = "xjgaavdv";
 
-// Your deployed site URL — update this before launch
+// Your deployed site URL
 const SITE_URL = "https://skiptheline.us";
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -889,27 +891,37 @@ const FormPage = ({ type, onBack }) => {
 
   const set = (id, val) => setValues(v => ({ ...v, [id]: val }));
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
 
-    const formId = isHiring ? TALLY_HIRING_ID : TALLY_CANDIDATE_ID;
+    const endpoint = isHiring ? FORMSPREE_HIRING : FORMSPREE_CANDIDATE;
 
     // Generate referral link
     if (values.name && values.email) {
       setRefLink(makeRefUrl(values.name, values.email));
     }
 
-    // Build Tally URL with all field values as query params
-    const params = new URLSearchParams();
-    Object.entries(values).forEach(([key, val]) => {
-      params.append(key, Array.isArray(val) ? val.join(", ") : (val || ""));
+    // Build payload — include all form values + referral
+    const payload = { ...values };
+    if (inboundRef.current) payload.referred_by = inboundRef.current;
+    // Flatten multiselect arrays to strings
+    Object.keys(payload).forEach(k => {
+      if (Array.isArray(payload[k])) payload[k] = payload[k].join(", ");
     });
-    if (inboundRef.current) params.append("referred_by", inboundRef.current);
 
-    // Open Tally in a new tab — 100% reliable, data guaranteed to reach Tally
-    // Tab opens immediately on user gesture so browsers won't block it
-    window.open(`https://tally.so/r/${formId}?${params.toString()}`, "_blank");
+    try {
+      // Formspree accepts cross-origin JSON POSTs natively — no CORS issues
+      const res = await fetch(`https://formspree.io/f/${endpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) console.error("Formspree error:", data);
+    } catch (err) {
+      console.error("Submission error:", err);
+    }
 
     setSubmitting(false);
     setSubmitted(true);
