@@ -632,37 +632,30 @@ const FormPage = ({ type, onBack }) => {
 
   const set = (id, val) => setValues(v => ({ ...v, [id]: val }));
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     setSubmitting(true);
 
     const formId = isHiring ? TALLY_HIRING_ID : TALLY_CANDIDATE_ID;
-    const isConfigured = !formId.startsWith("YOUR_");
 
-    if (isConfigured) {
-      try {
-        const formData = new FormData();
-        Object.entries(values).forEach(([key, val]) => {
-          if (Array.isArray(val)) val.forEach(v => formData.append(key, v));
-          else formData.append(key, val || "");
-        });
-        // Pass inbound referral code so you can track who referred who
-        if (inboundRef.current) formData.append("referred_by", inboundRef.current);
-        await fetch(`https://tally.so/r/${formId}`, {
-          method: "POST",
-          mode: "no-cors",
-          body: formData,
-        });
-      } catch (_) {}
-    }
-
-    // Generate this person's unique referral link from their name + email
+    // Generate referral link before redirecting
     if (!isHiring && values.name && values.email) {
       setRefLink(makeRefUrl(values.name, values.email));
     }
 
+    // Build Tally URL with prefilled values so data carries over
+    const params = new URLSearchParams();
+    Object.entries(values).forEach(([key, val]) => {
+      if (Array.isArray(val)) params.append(key, val.join(", "));
+      else if (val) params.append(key, val);
+    });
+    if (inboundRef.current) params.append("referred_by", inboundRef.current);
+
     setSubmitting(false);
     setSubmitted(true);
+
+    // Open Tally form in new tab — guaranteed delivery
+    window.open(`https://tally.so/r/${formId}?${params.toString()}`, "_blank");
   };
   const inputStyle = (id) => ({
     width: "100%", padding: "11px 14px",
