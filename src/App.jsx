@@ -1024,8 +1024,8 @@ const ReferralWelcome = ({ refCode, onContinue }) => {
           marginBottom: 16, maxWidth: 440, margin: "0 auto 16px"
         }}>
           {referrerName
-            ? `${referrerName} saved you a spot in the SkipTheLine founding cohort — a hand-selected group of 300 professionals getting direct access to hiring managers at companies that are actively hiring right now.`
-            : "Someone saved you a spot in the SkipTheLine founding cohort — a hand-selected group of 300 professionals getting direct access to hiring managers at companies that are actively hiring right now."
+            ? `${referrerName} saved you a spot in the SkipTheLine founding cohort, a hand-selected group of 300 professionals getting direct access to hiring managers at companies that are actively hiring right now.`
+            : "Someone saved you a spot in the SkipTheLine founding cohort, a hand-selected group of 300 professionals getting direct access to hiring managers at companies that are actively hiring right now."
           }
         </p>
 
