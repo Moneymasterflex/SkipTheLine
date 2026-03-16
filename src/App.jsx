@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Analytics, track } from "@vercel/analytics/react";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CONFIG — paste your Tally form IDs here (create free forms at tally.so)
@@ -384,6 +385,7 @@ const ReferralWelcome = ({ refCode, onContinue }) => {
   }, []);
 
   const handleContinue = () => {
+    track("referral_welcome_claimed", { referrer: refCode });
     setLeaving(true);
     setTimeout(onContinue, 500);
   };
@@ -638,8 +640,8 @@ const LandingPage = ({ onApply }) => {
       <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, padding: "0 40px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", background: scrollY > 20 ? "rgba(13,12,9,0.93)" : "transparent", backdropFilter: scrollY > 20 ? "blur(16px)" : "none", borderBottom: scrollY > 20 ? "1px solid rgba(255,255,255,0.05)" : "none", transition: "all .3s ease" }}>
         <NavLogo />
         <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-          <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#5a5248", cursor: "pointer" }} onClick={() => onApply("hiring")}>For hiring managers</span>
-          <button className="landing-btn" onClick={onApply} style={{ fontFamily: "'DM Sans', sans-serif", padding: "9px 22px", background: "#c9963c", color: "#0d0c09", border: "none", borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer", letterSpacing: "0.01em" }}>
+          <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#5a5248", cursor: "pointer" }} onClick={() => { track("cta_clicked", { location: "nav", type: "hiring_manager" }); onApply("hiring"); }}>For hiring managers</span>
+          <button className="landing-btn" onClick={() => { track("cta_clicked", { location: "nav", type: "candidate" }); onApply(); }} style={{ fontFamily: "'DM Sans', sans-serif", padding: "9px 22px", background: "#c9963c", color: "#0d0c09", border: "none", borderRadius: 6, fontSize: 13, fontWeight: 600, cursor: "pointer", letterSpacing: "0.01em" }}>
             Apply for access
           </button>
         </div>
@@ -1033,6 +1035,12 @@ const FormPage = ({ type, onBack }) => {
       // no-cors always throws — submission still goes through
     }
 
+    // Track submission event
+    track("form_submitted", {
+      type: isHiring ? "hiring_manager" : "candidate",
+      has_referral: !!inboundRef.current,
+    });
+
     setSubmitting(false);
     setSubmitted(true);
   };
@@ -1049,6 +1057,7 @@ const FormPage = ({ type, onBack }) => {
     const s = c.success;
     const copyRef = () => {
       navigator.clipboard.writeText(refLink).then(() => {
+        track("referral_link_copied");
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       });
@@ -1223,6 +1232,7 @@ export default function App() {
       {page === "landing"   && <LandingPage onApply={(t) => setPage(t === "hiring" ? "hiring" : "candidate")} />}
       {page === "candidate" && <FormPage type="candidate" onBack={() => setPage("landing")} />}
       {page === "hiring"    && <FormPage type="hiring"    onBack={() => setPage("landing")} />}
+      <Analytics />
     </div>
   );
 }
