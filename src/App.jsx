@@ -1044,7 +1044,7 @@ const FormPage = ({ type, onBack }) => {
               ) : field.type === "textarea" ? (
                 <textarea rows={4} placeholder={field.placeholder} value={values[field.id] || ""} onChange={e => set(field.id, e.target.value)} onFocus={() => setFocused(field.id)} onBlur={() => setFocused(null)} style={{ ...inputStyle(field.id), resize: "vertical" }} required={field.required} />
               ) : field.type === "select" ? (
-                <select value={values[field.id] || ""} onChange={e => set(field.id, e.target.value)} onFocus={() => setFocused(field.id)} onBlur={() => setFocused(null)} style={{ ...inputStyle(field.id), appearance: "none", backgroundColor: "#1e1c18", color: "#f0ede6", backgroundImage: "url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23c9963c' d='M6 8L1 3h10z'/%3E%3C/svg%3E")", backgroundRepeat: "no-repeat", backgroundPosition: "right 14px center" }} required={field.required}>
+                <select value={values[field.id] || ""} onChange={e => set(field.id, e.target.value)} onFocus={() => setFocused(field.id)} onBlur={() => setFocused(null)} style={{ ...inputStyle(field.id), appearance: "none", backgroundColor: "#1e1c18", color: "#f0ede6", backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23c9963c' d='M6 8L1 3h10z'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 14px center" }} required={field.required}>
                   <option value="">Select one...</option>
                   {field.options.map(o => <option key={o} value={o}>{o}</option>)}
                 </select>
