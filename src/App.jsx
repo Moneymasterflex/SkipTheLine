@@ -877,59 +877,62 @@ const LandingPage = ({ onApply }) => {
 // ─────────── FORM COMPONENT ──────────────────────────────────────────────────
 
 const FormPage = ({ type, onBack }) => {
-  const isHiring = type === "hiring";
-  const formId = isHiring ? TALLY_HIRING_ID : TALLY_CANDIDATE_ID;
-  const inboundRef = useRef(getInboundRef());
+  const c = COPY[type];
+  const [values, setValues] = useState({});
+  const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [focused, setFocused] = useState(null);
   const [refLink, setRefLink] = useState("");
   const [copied, setCopied] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const isHiring = type === "hiring";
+  const inboundRef = useRef(getInboundRef());
 
-  // Build Tally embed URL
-  const params = new URLSearchParams({
-    alignLeft: "1",
-    hideTitle: "1",
-    transparentBackground: "1",
-    dynamicHeight: "1",
+  const set = (id, val) => setValues(v => ({ ...v, [id]: val }));
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+
+    const formId = isHiring ? TALLY_HIRING_ID : TALLY_CANDIDATE_ID;
+
+    // Generate referral link for both candidates and hiring managers
+    if (values.name && values.email) {
+      setRefLink(makeRefUrl(values.name, values.email));
+    }
+
+    // Build URL params
+    const params = new URLSearchParams();
+    Object.entries(values).forEach(([key, val]) => {
+      params.append(key, Array.isArray(val) ? val.join(", ") : (val || ""));
+    });
+    if (inboundRef.current) params.append("referred_by", inboundRef.current);
+
+    // Open Tally in a hidden iframe — guaranteed delivery
+    try {
+      const iframe = document.createElement("iframe");
+      iframe.style.display = "none";
+      iframe.src = `https://tally.so/r/${formId}?${params.toString()}`;
+      document.body.appendChild(iframe);
+      setTimeout(() => { try { document.body.removeChild(iframe); } catch(_) {} }, 5000);
+    } catch (_) {}
+
+    // Track submission
+    if (typeof window !== "undefined" && typeof track !== "undefined") {
+      try { track("form_submitted", { type: isHiring ? "hiring_manager" : "candidate", has_referral: !!inboundRef.current }); } catch(_) {}
+    }
+
+    setSubmitting(false);
+    setSubmitted(true);
+  };
+
+  const inputStyle = (id) => ({
+    width: "100%", padding: "11px 14px",
+    background: focused === id ? "rgba(201,150,60,0.05)" : "rgba(255,255,255,0.03)",
+    border: `1px solid ${focused === id ? "rgba(201,150,60,0.5)" : "rgba(255,255,255,0.08)"}`,
+    borderRadius: 8, color: "#f0ede6", fontSize: 14, outline: "none",
+    fontFamily: "'DM Sans', sans-serif", transition: "all .15s", lineHeight: 1.5,
+    caretColor: "#c9963c"
   });
-  if (inboundRef.current) params.set("referred_by", inboundRef.current);
-  const embedUrl = `https://tally.so/embed/${formId}?${params.toString()}`;
-
-  // Trigger Tally to load embeds + listen for submission
-  useEffect(() => {
-    // Tally script is loaded in index.html — just call loadEmbeds
-    const tryLoad = () => {
-      if (typeof window.Tally !== "undefined") {
-        window.Tally.loadEmbeds();
-      } else {
-        // Fallback: set src directly on iframe
-        document.querySelectorAll("iframe[data-tally-src]:not([src])").forEach(el => {
-          el.src = el.dataset.tallySrc;
-        });
-      }
-    };
-    // Small delay to ensure iframe is in DOM
-    setTimeout(tryLoad, 200);
-
-    // Listen for Tally submission event
-    const handleMessage = (e) => {
-      try {
-        const data = typeof e.data === "string" ? JSON.parse(e.data) : e.data;
-        if (data?.event === "Tally.FormSubmitted") {
-          const fields = data?.payload?.fields || [];
-          const nameField = fields.find(f =>
-            f.label?.toLowerCase().includes("full name") || f.label?.toLowerCase() === "name"
-          );
-          const emailField = fields.find(f => f.label?.toLowerCase().includes("email"));
-          const name = nameField?.value || "";
-          const email = emailField?.value || "";
-          if (name && email) setRefLink(makeRefUrl(name, email));
-          setSubmitted(true);
-        }
-      } catch (_) {}
-    };
-    window.addEventListener("message", handleMessage);
-    return () => window.removeEventListener("message", handleMessage);
-  }, [formId]);
 
   const copyRef = () => {
     navigator.clipboard.writeText(refLink).then(() => {
@@ -938,20 +941,15 @@ const FormPage = ({ type, onBack }) => {
     });
   };
 
-  // Success screen
+  // ── Success screen ──────────────────────────────────────────────────────────
   if (submitted) {
+    const s = c.success;
     return (
       <div style={{ fontFamily: "'DM Sans', sans-serif", color: "#f0ede6", background: "#0d0c09", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 48 }}>
         <div style={{ maxWidth: 500, textAlign: "center", width: "100%" }}>
           <div style={{ width: 60, height: 60, borderRadius: "50%", border: "1px solid rgba(201,150,60,0.4)", background: "rgba(201,150,60,0.08)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 32px", fontSize: 24 }}>✦</div>
-          <h2 style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: 40, fontWeight: 400, fontStyle: "italic", color: "#f0ede6", marginBottom: 16, letterSpacing: "-0.02em" }}>
-            {isHiring ? "We'll be in touch within 48 hours." : "You're in the room."}
-          </h2>
-          <p style={{ fontSize: 16, color: "#7a6e64", lineHeight: 1.7, marginBottom: 36, fontWeight: 300 }}>
-            {isHiring
-              ? "Your application is being reviewed now. If accepted, you'll receive a personal email with your onboarding guide and everything you need to get your first session set up."
-              : "We'll review your application within 48 hours and send you your waitlist position along with next steps. Keep an eye on your inbox and your spam folder just in case."}
-          </p>
+          <h2 style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: 40, fontWeight: 400, fontStyle: "italic", color: "#f0ede6", marginBottom: 16, letterSpacing: "-0.02em" }}>{s.head}</h2>
+          <p style={{ fontSize: 16, color: "#7a6e64", lineHeight: 1.7, marginBottom: 36, fontWeight: 300 }}>{s.sub}</p>
 
           {refLink && (
             <div style={{ marginBottom: 28, padding: 24, background: "rgba(201,150,60,0.05)", border: "1px solid rgba(201,150,60,0.2)", borderRadius: 12, textAlign: "left" }}>
@@ -974,54 +972,109 @@ const FormPage = ({ type, onBack }) => {
 
           {isHiring && !refLink && (
             <div style={{ marginBottom: 28, padding: 20, background: "rgba(42,157,143,0.05)", border: "1px solid rgba(42,157,143,0.2)", borderRadius: 10, fontSize: 14, color: "#9a8a72", lineHeight: 1.65, textAlign: "left" }}>
-              The best rooms are built by people who know other great people. If there is a hiring manager in your network who would raise the caliber of this cohort, send them to skiptheline.us. You will both get priority session scheduling.
+              {s.note}
             </div>
           )}
 
           <button onClick={onBack} style={{ fontFamily: "'DM Sans', sans-serif", padding: "11px 24px", background: "transparent", color: "#5a5248", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, fontSize: 13, cursor: "pointer" }}>
-            Back to site
+            ← Back to site
           </button>
         </div>
       </div>
     );
   }
 
-  // Tally embed
+  // ── Form ────────────────────────────────────────────────────────────────────
   return (
     <div style={{ fontFamily: "'DM Sans', sans-serif", color: "#f0ede6", background: "#0d0c09", minHeight: "100vh" }}>
       <style>{`
         * { box-sizing: border-box; }
-        iframe[data-tally-src], iframe[src*="tally.so"] { border: none !important; }
+        .checkbox-opt { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border: 1px solid rgba(255,255,255,0.07); border-radius: 7px; cursor: pointer; transition: all .15s; }
+        .checkbox-opt:hover { border-color: rgba(201,150,60,0.3); background: rgba(201,150,60,0.04); }
+        .submit-btn:hover { background: #e8b84a !important; transform: translateY(-1px); }
+        .submit-btn { transition: all .2s ease; }
+        select option { background-color: #1e1c18; color: #f0ede6; font-size: 14px; }
+        select option:checked { background-color: #c9963c; color: #0d0c09; }
       `}</style>
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: "64px 32px 100px" }}>
-        <button onClick={onBack} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#5a5248", background: "none", border: "none", cursor: "pointer", marginBottom: 32, padding: 0 }}>
-          ← Back
-        </button>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "5px 14px", borderRadius: 100, border: "1px solid rgba(201,150,60,0.3)", background: "rgba(201,150,60,0.06)", marginBottom: 24 }}>
+
+      <div style={{ maxWidth: 660, margin: "0 auto", padding: "72px 32px 100px" }}>
+        <button onClick={onBack} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#5a5248", background: "none", border: "none", cursor: "pointer", marginBottom: 32, padding: 0, display: "flex", alignItems: "center", gap: 6 }}>← Back</button>
+
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "5px 14px", borderRadius: 100, border: "1px solid rgba(201,150,60,0.3)", background: "rgba(201,150,60,0.06)", marginBottom: 32 }}>
           <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#c9963c" }} />
-          <span style={{ fontSize: 11, fontWeight: 600, color: "#c9963c", letterSpacing: "0.08em", textTransform: "uppercase" }}>
-            {isHiring ? "Hiring Manager Application" : "Founding Cohort Application"}
-          </span>
+          <span style={{ fontSize: 11, fontWeight: 600, color: "#c9963c", letterSpacing: "0.08em", textTransform: "uppercase" }}>{c.badge}</span>
         </div>
-        <h1 style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: "clamp(30px, 5vw, 48px)", fontWeight: 400, fontStyle: "italic", color: "#f0ede6", marginBottom: 12, lineHeight: 1.1, letterSpacing: "-0.02em" }}>
-          {isHiring ? "Meet your next great hire before they apply anywhere else." : "You deserve to be in the room."}
-        </h1>
-        <p style={{ fontSize: 15, color: "#7a6e64", lineHeight: 1.7, marginBottom: 40, fontWeight: 300, maxWidth: 560 }}>
-          {isHiring
-            ? "We've pre-screened 300 ambitious professionals and matched them to hiring managers based on role, seniority, and company fit. Everything is free."
-            : "We read every application personally and match you to hiring managers who are looking for someone like you."}
-        </p>
-        <iframe
-          data-tally-src={embedUrl}
-          loading="lazy"
-          width="100%"
-          height="800"
-          frameBorder="0"
-          marginHeight="0"
-          marginWidth="0"
-          title={isHiring ? "Hiring Manager Application" : "Candidate Application"}
-          style={{ borderRadius: 12 }}
-        />
+
+        <h1 style={{ fontFamily: "'Instrument Serif', Georgia, serif", fontSize: "clamp(30px, 5vw, 48px)", fontWeight: 400, fontStyle: "italic", color: "#f0ede6", marginBottom: 16, lineHeight: 1.1, letterSpacing: "-0.02em" }}>{c.head}</h1>
+        <p style={{ fontSize: 16, color: "#7a6e64", lineHeight: 1.7, marginBottom: 20, fontWeight: 300, maxWidth: 560 }}>{c.sub}</p>
+
+        {!isHiring && (
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "9px 16px", borderRadius: 100, background: "rgba(201,150,60,0.06)", border: "1px solid rgba(201,150,60,0.2)", marginBottom: 28 }}>
+            <div style={{ display: "flex" }}>
+              {["#c9963c","#2a9d8f","#7c6fcd"].map((col, i) => (
+                <div key={i} style={{ width: 20, height: 20, borderRadius: "50%", background: col, border: "2px solid #0d0c09", marginLeft: i > 0 ? -6 : 0, opacity: 0.85 }} />
+              ))}
+            </div>
+            <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: "#9a8a72" }}>347 professionals already on the waitlist</span>
+          </div>
+        )}
+
+        {isHiring && c.intro && (
+          <div style={{ padding: 20, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, marginBottom: 40 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "#5a5248", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 14 }}>{c.intro}</div>
+            {c.commitments.map((item, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: i < c.commitments.length - 1 ? 10 : 0 }}>
+                <div style={{ color: "#c9963c", fontSize: 14, marginTop: 2, flexShrink: 0 }}>→</div>
+                <span style={{ fontSize: 14, color: "#8a8078", lineHeight: 1.5 }}>{item}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+          {c.fields.map(field => (
+            <div key={field.id}>
+              <label style={{ display: "block", fontSize: 13, fontWeight: 500, color: "#8a8078", marginBottom: 8, letterSpacing: "0.01em" }}>
+                {field.label}
+                {field.required && <span style={{ color: "#c9963c", marginLeft: 4 }}>*</span>}
+              </label>
+
+              {(field.type === "text" || field.type === "email" || field.type === "url") ? (
+                <input type={field.type} placeholder={field.placeholder} value={values[field.id] || ""} onChange={e => set(field.id, e.target.value)} onFocus={() => setFocused(field.id)} onBlur={() => setFocused(null)} style={inputStyle(field.id)} required={field.required} />
+              ) : field.type === "textarea" ? (
+                <textarea rows={4} placeholder={field.placeholder} value={values[field.id] || ""} onChange={e => set(field.id, e.target.value)} onFocus={() => setFocused(field.id)} onBlur={() => setFocused(null)} style={{ ...inputStyle(field.id), resize: "vertical" }} required={field.required} />
+              ) : field.type === "select" ? (
+                <select value={values[field.id] || ""} onChange={e => set(field.id, e.target.value)} onFocus={() => setFocused(field.id)} onBlur={() => setFocused(null)} style={{ ...inputStyle(field.id), appearance: "none", backgroundColor: "#1e1c18", color: "#f0ede6", backgroundImage: "url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23c9963c' d='M6 8L1 3h10z'/%3E%3C/svg%3E")", backgroundRepeat: "no-repeat", backgroundPosition: "right 14px center" }} required={field.required}>
+                  <option value="">Select one...</option>
+                  {field.options.map(o => <option key={o} value={o}>{o}</option>)}
+                </select>
+              ) : field.type === "multiselect" ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {field.options.map(opt => {
+                    const selected = (values[field.id] || []).includes(opt);
+                    return (
+                      <div key={opt} className="checkbox-opt" onClick={() => { const cur = values[field.id] || []; set(field.id, selected ? cur.filter(x => x !== opt) : [...cur, opt]); }} style={{ border: `1px solid ${selected ? "rgba(201,150,60,0.4)" : "rgba(255,255,255,0.07)"}`, background: selected ? "rgba(201,150,60,0.08)" : "transparent" }}>
+                        <div style={{ width: 16, height: 16, borderRadius: 4, border: `1.5px solid ${selected ? "#c9963c" : "rgba(255,255,255,0.2)"}`, background: selected ? "#c9963c" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          {selected && <span style={{ fontSize: 10, color: "#0d0c09", fontWeight: 700 }}>✓</span>}
+                        </div>
+                        <span style={{ fontSize: 14, color: selected ? "#c9963c" : "#8a8078" }}>{opt}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : null}
+
+              {field.hint && <div style={{ fontSize: 12, color: "#4a4238", marginTop: 7, lineHeight: 1.5 }}>{field.hint}</div>}
+            </div>
+          ))}
+
+          <div style={{ marginTop: 8 }}>
+            <button type="submit" disabled={submitting} className="submit-btn" style={{ width: "100%", padding: "16px 0", background: submitting ? "#a07828" : "#c9963c", color: "#0d0c09", border: "none", borderRadius: 8, fontSize: 16, fontWeight: 600, cursor: submitting ? "wait" : "pointer", letterSpacing: "0.01em", fontFamily: "'DM Sans', sans-serif", opacity: submitting ? 0.8 : 1 }}>
+              {submitting ? "Submitting..." : c.submit}
+            </button>
+            <p style={{ fontSize: 12, color: "#3a3830", textAlign: "center", marginTop: 16, lineHeight: 1.6 }}>{c.disclaimer}</p>
+          </div>
+        </form>
       </div>
     </div>
   );
