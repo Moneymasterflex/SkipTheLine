@@ -130,9 +130,9 @@ const COPY = {
     submit: "Apply to join the founding cohort →",
     disclaimer: "We review every hiring manager application within 24 hours and respond personally. If accepted, you'll receive an onboarding guide and a calendar link to confirm your first session.",
     success: {
-      head: "We'll be in touch within 24 hours.",
+      head: "We'll be in touch within 48 hours.",
       sub: "Your application is being reviewed now. If accepted, you'll receive a personal email with your onboarding guide and everything you need to get your first session set up.",
-      note: "Know another hiring manager who'd be a great fit for this cohort? Send them the link. Hiring managers who bring a peer get first choice of session time slots."
+      note: "The best rooms are built by people who know other great people. If there's a hiring manager in your network who'd raise the caliber of this cohort, send them this link. You'll both get priority session scheduling."
     }
   }
 };
@@ -140,51 +140,119 @@ const COPY = {
 // ─────────── SHARED COMPONENTS ───────────────────────────────────────────────
 
 // Concept C — queue of muted figures, one gold leaper with arc + spark
-const NavLogo = () => (
-  <svg width="210" height="36" viewBox="0 0 420 72" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
+// ─────────── LIVE ACTIVITY TICKER ────────────────────────────────────────────
 
-    {/* Muted queue figures × 3 */}
-    <g stroke="#4a4030" fill="none" strokeWidth="1.5" strokeLinecap="round">
-      {/* Figure 1 */}
-      <circle cx="30" cy="14" r="7" />
-      <line x1="30" y1="21" x2="30" y2="40" />
-      <line x1="30" y1="28" x2="23" y2="36" /><line x1="30" y1="28" x2="37" y2="36" />
-      <line x1="30" y1="40" x2="23" y2="52" /><line x1="30" y1="40" x2="37" y2="52" />
-      {/* Figure 2 */}
-      <circle cx="62" cy="14" r="7" />
-      <line x1="62" y1="21" x2="62" y2="40" />
-      <line x1="62" y1="28" x2="55" y2="36" /><line x1="62" y1="28" x2="69" y2="36" />
-      <line x1="62" y1="40" x2="55" y2="52" /><line x1="62" y1="40" x2="69" y2="52" />
-      {/* Figure 3 */}
-      <circle cx="94" cy="14" r="7" />
-      <line x1="94" y1="21" x2="94" y2="40" />
-      <line x1="94" y1="28" x2="87" y2="36" /><line x1="94" y1="28" x2="101" y2="36" />
-      <line x1="94" y1="40" x2="87" y2="52" /><line x1="94" y1="40" x2="101" y2="52" />
-    </g>
+const FIRST_NAMES = ["Jordan","Marcus","Priya","Devon","Aaliyah","Tyler","Simone","Kai","Zara","Elijah","Nina","Reece","Amara","Blake","Jasmine","Theo","Camille","Andre","Leila","Miles","Tariq","Sofia","Donovan","Imani","Nate","Chloe","Darius","Maya","Owen","Nia"];
+const CITIES = ["New York","Austin","Atlanta","Chicago","Los Angeles","Seattle","Miami","Boston","Denver","Houston","San Francisco","Washington DC","Charlotte","Phoenix","Nashville","Detroit","Portland","Dallas","Philadelphia","Minneapolis"];
+const ACTIONS = [
+  (name, city) => `${name} from ${city} just joined the waitlist`,
+  (name, city) => `${name} from ${city} applied for a founding spot`,
+  (name, city) => `${name} in ${city} is reviewing hiring manager profiles`,
+  (name, city) => `${name} from ${city} just claimed a founding spot`,
+  (name, city) => `${name} in ${city} submitted their application`,
+  (name, city) => `${name} from ${city} was matched to a hiring manager`,
+];
 
-    {/* Dashed leap arc */}
-    <path d="M112,42 C112,10 136,8 136,14" stroke="#C8903A" strokeWidth="1.5" strokeDasharray="4,3" fill="none" strokeLinecap="round" />
+function randomItem(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
 
-    {/* Gold leaping figure */}
-    <g stroke="#C8903A" fill="none" strokeWidth="2" strokeLinecap="round">
-      <circle cx="136" cy="14" r="8" stroke="#C8903A" fill="#C8903A" fillOpacity="0.1" />
-      <line x1="136" y1="22" x2="138" y2="40" />
-      <line x1="137" y1="30" x2="127" y2="26" /><line x1="137" y1="30" x2="147" y2="34" />
-      <line x1="138" y1="40" x2="128" y2="52" /><line x1="138" y1="40" x2="148" y2="50" />
-      {/* Spark ✦ */}
-      <text x="136" y="8" textAnchor="middle" fill="#C8903A" fontSize="9" fontFamily="serif" stroke="none">✦</text>
-    </g>
+function generateActivity() {
+  const name = randomItem(FIRST_NAMES);
+  const city = randomItem(CITIES);
+  const action = randomItem(ACTIONS);
+  return action(name, city);
+}
 
-    {/* Ground line */}
-    <line x1="18" y1="55" x2="158" y2="55" stroke="#2A2318" strokeWidth="0.75" />
+const ActivityTicker = () => {
+  const [items, setItems] = useState([
+    { id: 1, text: generateActivity(), visible: true },
+  ]);
+  const [viewers, setViewers] = useState(Math.floor(Math.random() * 18) + 24);
+  const counterRef = useRef(0);
 
-    {/* Wordmark */}
-    <text x="200" y="38" textAnchor="middle" fontFamily="'Instrument Serif',Georgia,serif" fontStyle="italic" fontSize="28" fill="#EEE8DC" letterSpacing="-0.5">SkipTheLine</text>
-    <line x1="148" y1="46" x2="252" y2="46" stroke="#2A2318" strokeWidth="0.75" />
-    <text x="200" y="56" textAnchor="middle" fontFamily="'DM Sans',Arial,sans-serif" fontWeight="300" fontSize="7" fill="#6a5d4a" letterSpacing="3">TALK FIRST.</text>
-  </svg>
-);
+  useEffect(() => {
+    // Add new activity every 4–7 seconds
+    const addActivity = () => {
+      counterRef.current += 1;
+      const id = counterRef.current;
+      setItems(prev => [{ id, text: generateActivity(), visible: true }, ...prev.slice(0, 2)]);
+      // Schedule next
+      setTimeout(addActivity, Math.random() * 3000 + 4000);
+    };
+    const t = setTimeout(addActivity, Math.random() * 2000 + 3000);
 
+    // Fluctuate viewer count
+    const viewerInterval = setInterval(() => {
+      setViewers(v => {
+        const delta = Math.random() > 0.5 ? 1 : -1;
+        return Math.max(18, Math.min(52, v + delta));
+      });
+    }, 5000);
+
+    return () => { clearTimeout(t); clearInterval(viewerInterval); };
+  }, []);
+
+  return (
+    <div style={{ marginTop: 24 }}>
+      <style>{`
+        @keyframes tickerSlideIn {
+          from { opacity: 0; transform: translateX(-12px); }
+          to   { opacity: 1; transform: translateX(0); }
+        }
+        .ticker-item { animation: tickerSlideIn 0.4s ease both; }
+      `}</style>
+
+      {/* Live viewer count */}
+      <div style={{
+        display: "inline-flex", alignItems: "center", gap: 8,
+        marginBottom: 10,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+          <div style={{
+            width: 7, height: 7, borderRadius: "50%", background: "#22c55e",
+            boxShadow: "0 0 6px rgba(34,197,94,0.7)",
+            animation: "pulse 2s infinite"
+          }} />
+          <span style={{
+            fontFamily: "'DM Sans', sans-serif", fontSize: 11,
+            color: "#4a5248", fontWeight: 500
+          }}>
+            {viewers} people viewing right now
+          </span>
+        </div>
+      </div>
+
+      {/* Activity feed */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        {items.map((item, i) => (
+          <div key={item.id} className="ticker-item" style={{
+            display: "inline-flex", alignItems: "center", gap: 8,
+            padding: "6px 12px",
+            background: i === 0 ? "rgba(201,150,60,0.07)" : "rgba(255,255,255,0.02)",
+            border: `1px solid ${i === 0 ? "rgba(201,150,60,0.2)" : "rgba(255,255,255,0.04)"}`,
+            borderRadius: 20,
+            opacity: i === 0 ? 1 : i === 1 ? 0.55 : 0.25,
+            transition: "opacity 0.5s ease",
+            width: "fit-content",
+          }}>
+            <div style={{
+              width: 5, height: 5, borderRadius: "50%", flexShrink: 0,
+              background: i === 0 ? "#c9963c" : "#3a3428"
+            }} />
+            <span style={{
+              fontFamily: "'DM Sans', sans-serif",
+              fontSize: 11, color: i === 0 ? "#9a8a72" : "#4a4238",
+              whiteSpace: "nowrap"
+            }}>
+              {item.text}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
 
 // ─────────── LIVE ACTIVITY TICKER ────────────────────────────────────────────
 
@@ -299,6 +367,188 @@ const ActivityTicker = () => {
     </div>
   );
 };
+
+// ─────────── REFERRAL WELCOME OVERLAY ────────────────────────────────────────
+
+const ReferralWelcome = ({ refCode, onContinue }) => {
+  const [visible, setVisible] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+
+  // Extract a readable name from the ref code (e.g. "alex-chen-4f2a" → "Alex Chen")
+  const referrerName = refCode
+    ? refCode.split("-").slice(0, -1).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")
+    : "";
+
+  useEffect(() => {
+    setTimeout(() => setVisible(true), 80);
+  }, []);
+
+  const handleContinue = () => {
+    setLeaving(true);
+    setTimeout(onContinue, 500);
+  };
+
+  return (
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 999,
+      background: "#0d0c09",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      padding: "32px",
+      opacity: leaving ? 0 : 1,
+      transition: "opacity 0.5s ease",
+    }}>
+      <style>{`
+        @keyframes sparkle {
+          0%   { opacity: 0; transform: scale(0) rotate(0deg); }
+          50%  { opacity: 1; transform: scale(1.3) rotate(180deg); }
+          100% { opacity: 1; transform: scale(1) rotate(360deg); }
+        }
+        @keyframes slideUp {
+          from { opacity: 0; transform: translateY(32px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .ref-line { animation: slideUp 0.6s ease both; }
+        .ref-l1 { animation-delay: 0.2s; }
+        .ref-l2 { animation-delay: 0.4s; }
+        .ref-l3 { animation-delay: 0.6s; }
+        .ref-l4 { animation-delay: 0.8s; }
+        .ref-l5 { animation-delay: 1.0s; }
+        .ref-spark { animation: sparkle 0.8s ease both; animation-delay: 0.1s; }
+        .ref-btn:hover { background: #e8b84a !important; transform: translateY(-2px) !important; }
+        .ref-btn { transition: all 0.2s ease !important; }
+      `}</style>
+
+      <div style={{ maxWidth: 520, textAlign: "center" }}>
+
+        {/* Animated spark */}
+        <div className="ref-spark" style={{
+          fontSize: 48, marginBottom: 32,
+          filter: "drop-shadow(0 0 20px rgba(201,150,60,0.6))"
+        }}>✦</div>
+
+        {/* You were invited */}
+        <div className="ref-line ref-l1" style={{
+          fontFamily: "'DM Sans', sans-serif",
+          fontSize: 11, fontWeight: 700, letterSpacing: "0.15em",
+          textTransform: "uppercase", color: "#c9963c", marginBottom: 20
+        }}>
+          Personal Invitation
+        </div>
+
+        {/* Main message */}
+        <h1 className="ref-line ref-l2" style={{
+          fontFamily: "'Instrument Serif', Georgia, serif",
+          fontSize: "clamp(32px, 6vw, 52px)",
+          fontWeight: 400, fontStyle: "italic",
+          color: "#f0ede6", lineHeight: 1.15,
+          letterSpacing: "-0.02em", marginBottom: 24
+        }}>
+          {referrerName ? `${referrerName} thinks you belong in the room.` : "You've been personally invited."}
+        </h1>
+
+        {/* Supporting copy */}
+        <p className="ref-line ref-l3" style={{
+          fontFamily: "'DM Sans', sans-serif",
+          fontSize: 17, lineHeight: 1.75,
+          color: "#7a6e64", fontWeight: 300,
+          marginBottom: 16, maxWidth: 440, margin: "0 auto 16px"
+        }}>
+          {referrerName
+            ? `${referrerName} saved you a spot in the SkipTheLine founding cohort, a hand-selected group of 300 professionals getting direct access to hiring managers at companies that are actively hiring right now.`
+            : "Someone saved you a spot in the SkipTheLine founding cohort, a hand-selected group of 300 professionals getting direct access to hiring managers at companies that are actively hiring right now."
+          }
+        </p>
+
+        <p className="ref-line ref-l4" style={{
+          fontFamily: "'DM Sans', sans-serif",
+          fontSize: 15, lineHeight: 1.7,
+          color: "#5a5248", fontWeight: 300,
+          marginBottom: 44
+        }}>
+          No applications. No ATS. No waiting in the dark. Just a real conversation with the person who can say yes.
+        </p>
+
+        {/* CTA */}
+        <div className="ref-line ref-l5">
+          <button
+            className="ref-btn"
+            onClick={handleContinue}
+            style={{
+              fontFamily: "'DM Sans', sans-serif",
+              padding: "16px 48px",
+              background: "#c9963c",
+              color: "#0d0c09",
+              border: "none",
+              borderRadius: 8,
+              fontSize: 16,
+              fontWeight: 700,
+              cursor: "pointer",
+              letterSpacing: "0.01em",
+              boxShadow: "0 4px 32px rgba(201,150,60,0.35)",
+              display: "block",
+              margin: "0 auto 20px"
+            }}
+          >
+            Claim my spot →
+          </button>
+          <p style={{
+            fontFamily: "'DM Sans', sans-serif",
+            fontSize: 12, color: "#3a3428"
+          }}>
+            Founding cohort · 127 spots remaining · completely free
+          </p>
+        </div>
+
+      </div>
+    </div>
+  );
+};
+
+const NavLogo = () => (
+  <svg width="210" height="36" viewBox="0 0 420 72" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
+
+    {/* Muted queue figures × 3 */}
+    <g stroke="#4a4030" fill="none" strokeWidth="1.5" strokeLinecap="round">
+      {/* Figure 1 */}
+      <circle cx="30" cy="14" r="7" />
+      <line x1="30" y1="21" x2="30" y2="40" />
+      <line x1="30" y1="28" x2="23" y2="36" /><line x1="30" y1="28" x2="37" y2="36" />
+      <line x1="30" y1="40" x2="23" y2="52" /><line x1="30" y1="40" x2="37" y2="52" />
+      {/* Figure 2 */}
+      <circle cx="62" cy="14" r="7" />
+      <line x1="62" y1="21" x2="62" y2="40" />
+      <line x1="62" y1="28" x2="55" y2="36" /><line x1="62" y1="28" x2="69" y2="36" />
+      <line x1="62" y1="40" x2="55" y2="52" /><line x1="62" y1="40" x2="69" y2="52" />
+      {/* Figure 3 */}
+      <circle cx="94" cy="14" r="7" />
+      <line x1="94" y1="21" x2="94" y2="40" />
+      <line x1="94" y1="28" x2="87" y2="36" /><line x1="94" y1="28" x2="101" y2="36" />
+      <line x1="94" y1="40" x2="87" y2="52" /><line x1="94" y1="40" x2="101" y2="52" />
+    </g>
+
+    {/* Dashed leap arc */}
+    <path d="M112,42 C112,10 136,8 136,14" stroke="#C8903A" strokeWidth="1.5" strokeDasharray="4,3" fill="none" strokeLinecap="round" />
+
+    {/* Gold leaping figure */}
+    <g stroke="#C8903A" fill="none" strokeWidth="2" strokeLinecap="round">
+      <circle cx="136" cy="14" r="8" stroke="#C8903A" fill="#C8903A" fillOpacity="0.1" />
+      <line x1="136" y1="22" x2="138" y2="40" />
+      <line x1="137" y1="30" x2="127" y2="26" /><line x1="137" y1="30" x2="147" y2="34" />
+      <line x1="138" y1="40" x2="128" y2="52" /><line x1="138" y1="40" x2="148" y2="50" />
+      {/* Spark ✦ */}
+      <text x="136" y="8" textAnchor="middle" fill="#C8903A" fontSize="9" fontFamily="serif" stroke="none">✦</text>
+    </g>
+
+    {/* Ground line */}
+    <line x1="18" y1="55" x2="158" y2="55" stroke="#2A2318" strokeWidth="0.75" />
+
+    {/* Wordmark */}
+    <text x="200" y="38" textAnchor="middle" fontFamily="'Instrument Serif',Georgia,serif" fontStyle="italic" fontSize="28" fill="#EEE8DC" letterSpacing="-0.5">SkipTheLine</text>
+    <line x1="148" y1="46" x2="252" y2="46" stroke="#2A2318" strokeWidth="0.75" />
+    <text x="200" y="56" textAnchor="middle" fontFamily="'DM Sans',Arial,sans-serif" fontWeight="300" fontSize="7" fill="#6a5d4a" letterSpacing="3">TALK FIRST.</text>
+  </svg>
+);
+
 
 // ─────────── LANDING PAGE ────────────────────────────────────────────────────
 
@@ -940,145 +1190,6 @@ const FormPage = ({ type, onBack }) => {
             <p style={{ fontSize: 12, color: "#3a3830", textAlign: "center", marginTop: 16, lineHeight: 1.6 }}>{c.disclaimer}</p>
           </div>
         </form>
-      </div>
-    </div>
-  );
-};
-
-// ─────────── ROOT APP ────────────────────────────────────────────────────────
-
-
-// ─────────── REFERRAL WELCOME OVERLAY ────────────────────────────────────────
-
-const ReferralWelcome = ({ refCode, onContinue }) => {
-  const [visible, setVisible] = useState(false);
-  const [leaving, setLeaving] = useState(false);
-
-  // Extract a readable name from the ref code (e.g. "alex-chen-4f2a" → "Alex Chen")
-  const referrerName = refCode
-    ? refCode.split("-").slice(0, -1).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")
-    : "";
-
-  useEffect(() => {
-    setTimeout(() => setVisible(true), 80);
-  }, []);
-
-  const handleContinue = () => {
-    setLeaving(true);
-    setTimeout(onContinue, 500);
-  };
-
-  return (
-    <div style={{
-      position: "fixed", inset: 0, zIndex: 999,
-      background: "#0d0c09",
-      display: "flex", alignItems: "center", justifyContent: "center",
-      padding: "32px",
-      opacity: leaving ? 0 : 1,
-      transition: "opacity 0.5s ease",
-    }}>
-      <style>{`
-        @keyframes sparkle {
-          0%   { opacity: 0; transform: scale(0) rotate(0deg); }
-          50%  { opacity: 1; transform: scale(1.3) rotate(180deg); }
-          100% { opacity: 1; transform: scale(1) rotate(360deg); }
-        }
-        @keyframes slideUp {
-          from { opacity: 0; transform: translateY(32px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        .ref-line { animation: slideUp 0.6s ease both; }
-        .ref-l1 { animation-delay: 0.2s; }
-        .ref-l2 { animation-delay: 0.4s; }
-        .ref-l3 { animation-delay: 0.6s; }
-        .ref-l4 { animation-delay: 0.8s; }
-        .ref-l5 { animation-delay: 1.0s; }
-        .ref-spark { animation: sparkle 0.8s ease both; animation-delay: 0.1s; }
-        .ref-btn:hover { background: #e8b84a !important; transform: translateY(-2px) !important; }
-        .ref-btn { transition: all 0.2s ease !important; }
-      `}</style>
-
-      <div style={{ maxWidth: 520, textAlign: "center" }}>
-
-        {/* Animated spark */}
-        <div className="ref-spark" style={{
-          fontSize: 48, marginBottom: 32,
-          filter: "drop-shadow(0 0 20px rgba(201,150,60,0.6))"
-        }}>✦</div>
-
-        {/* You were invited */}
-        <div className="ref-line ref-l1" style={{
-          fontFamily: "'DM Sans', sans-serif",
-          fontSize: 11, fontWeight: 700, letterSpacing: "0.15em",
-          textTransform: "uppercase", color: "#c9963c", marginBottom: 20
-        }}>
-          Personal Invitation
-        </div>
-
-        {/* Main message */}
-        <h1 className="ref-line ref-l2" style={{
-          fontFamily: "'Instrument Serif', Georgia, serif",
-          fontSize: "clamp(32px, 6vw, 52px)",
-          fontWeight: 400, fontStyle: "italic",
-          color: "#f0ede6", lineHeight: 1.15,
-          letterSpacing: "-0.02em", marginBottom: 24
-        }}>
-          {referrerName ? `${referrerName} thinks you belong in the room.` : "You've been personally invited."}
-        </h1>
-
-        {/* Supporting copy */}
-        <p className="ref-line ref-l3" style={{
-          fontFamily: "'DM Sans', sans-serif",
-          fontSize: 17, lineHeight: 1.75,
-          color: "#7a6e64", fontWeight: 300,
-          marginBottom: 16, maxWidth: 440, margin: "0 auto 16px"
-        }}>
-          {referrerName
-            ? `${referrerName} saved you a spot in the SkipTheLine founding cohort, a hand-selected group of 300 professionals getting direct access to hiring managers at companies that are actively hiring right now.`
-            : "Someone saved you a spot in the SkipTheLine founding cohort, a hand-selected group of 300 professionals getting direct access to hiring managers at companies that are actively hiring right now."
-          }
-        </p>
-
-        <p className="ref-line ref-l4" style={{
-          fontFamily: "'DM Sans', sans-serif",
-          fontSize: 15, lineHeight: 1.7,
-          color: "#5a5248", fontWeight: 300,
-          marginBottom: 44
-        }}>
-          No applications. No ATS. No waiting in the dark. Just a real conversation with the person who can say yes.
-        </p>
-
-        {/* CTA */}
-        <div className="ref-line ref-l5">
-          <button
-            className="ref-btn"
-            onClick={handleContinue}
-            style={{
-              fontFamily: "'DM Sans', sans-serif",
-              padding: "16px 48px",
-              background: "#c9963c",
-              color: "#0d0c09",
-              border: "none",
-              borderRadius: 8,
-              fontSize: 16,
-              fontWeight: 700,
-              cursor: "pointer",
-              letterSpacing: "0.01em",
-              boxShadow: "0 4px 32px rgba(201,150,60,0.35)",
-              display: "block",
-              margin: "0 auto 20px"
-            }}
-          >
-            Claim my spot →
-          </button>
-          <p style={{
-            fontFamily: "'DM Sans', sans-serif",
-            fontSize: 12, color: "#3a3428"
-          }}>
-            Founding cohort · 127 spots remaining · completely free
-          </p>
-        </div>
-
       </div>
     </div>
   );
