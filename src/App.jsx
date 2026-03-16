@@ -751,30 +751,40 @@ const FormPage = ({ type, onBack }) => {
 
   const set = (id, val) => setValues(v => ({ ...v, [id]: val }));
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
 
     const formId = isHiring ? TALLY_HIRING_ID : TALLY_CANDIDATE_ID;
 
-    // Generate referral link before redirecting
+    // Generate referral link
     if (!isHiring && values.name && values.email) {
       setRefLink(makeRefUrl(values.name, values.email));
     }
 
-    // Build Tally URL with prefilled values so data carries over
-    const params = new URLSearchParams();
-    Object.entries(values).forEach(([key, val]) => {
-      if (Array.isArray(val)) params.append(key, val.join(", "));
-      else if (val) params.append(key, val);
-    });
-    if (inboundRef.current) params.append("referred_by", inboundRef.current);
+    try {
+      // Build form payload
+      const payload = {};
+      Object.entries(values).forEach(([key, val]) => {
+        payload[key] = Array.isArray(val) ? val.join(", ") : (val || "");
+      });
+      if (inboundRef.current) payload["referred_by"] = inboundRef.current;
+
+      // Submit to Tally's embed endpoint — silent background POST, no redirect
+      const formData = new FormData();
+      Object.entries(payload).forEach(([k, v]) => formData.append(k, v));
+
+      await fetch(`https://tally.so/r/${formId}`, {
+        method: "POST",
+        mode: "no-cors",
+        body: formData,
+      });
+    } catch (_) {
+      // no-cors always throws — submission still goes through
+    }
 
     setSubmitting(false);
     setSubmitted(true);
-
-    // Open Tally form in new tab — guaranteed delivery
-    window.open(`https://tally.so/r/${formId}?${params.toString()}`, "_blank");
   };
   const inputStyle = (id) => ({
     width: "100%", padding: "11px 14px",
@@ -1075,7 +1085,7 @@ const ReferralWelcome = ({ refCode, onContinue }) => {
 };
 
 export default function App() {
-  const [page, setPage] = useState("landing"); // "landing" | "candidate" | "hiring"
+  const [page, setPage] = useState("landing");
 
   // Detect inbound referral code — show welcome screen if present
   const inboundRef = getInboundRef();
