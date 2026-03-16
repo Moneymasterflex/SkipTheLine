@@ -818,8 +818,161 @@ const FormPage = ({ type, onBack }) => {
 
 // ─────────── ROOT APP ────────────────────────────────────────────────────────
 
+
+// ─────────── REFERRAL WELCOME OVERLAY ────────────────────────────────────────
+
+const ReferralWelcome = ({ refCode, onContinue }) => {
+  const [visible, setVisible] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+
+  // Extract a readable name from the ref code (e.g. "alex-chen-4f2a" → "Alex Chen")
+  const referrerName = refCode
+    ? refCode.split("-").slice(0, -1).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")
+    : "";
+
+  useEffect(() => {
+    setTimeout(() => setVisible(true), 80);
+  }, []);
+
+  const handleContinue = () => {
+    setLeaving(true);
+    setTimeout(onContinue, 500);
+  };
+
+  return (
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 999,
+      background: "#0d0c09",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      padding: "32px",
+      opacity: leaving ? 0 : 1,
+      transition: "opacity 0.5s ease",
+    }}>
+      <style>{`
+        @keyframes sparkle {
+          0%   { opacity: 0; transform: scale(0) rotate(0deg); }
+          50%  { opacity: 1; transform: scale(1.3) rotate(180deg); }
+          100% { opacity: 1; transform: scale(1) rotate(360deg); }
+        }
+        @keyframes slideUp {
+          from { opacity: 0; transform: translateY(32px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .ref-line { animation: slideUp 0.6s ease both; }
+        .ref-l1 { animation-delay: 0.2s; }
+        .ref-l2 { animation-delay: 0.4s; }
+        .ref-l3 { animation-delay: 0.6s; }
+        .ref-l4 { animation-delay: 0.8s; }
+        .ref-l5 { animation-delay: 1.0s; }
+        .ref-spark { animation: sparkle 0.8s ease both; animation-delay: 0.1s; }
+        .ref-btn:hover { background: #e8b84a !important; transform: translateY(-2px) !important; }
+        .ref-btn { transition: all 0.2s ease !important; }
+      `}</style>
+
+      <div style={{ maxWidth: 520, textAlign: "center" }}>
+
+        {/* Animated spark */}
+        <div className="ref-spark" style={{
+          fontSize: 48, marginBottom: 32,
+          filter: "drop-shadow(0 0 20px rgba(201,150,60,0.6))"
+        }}>✦</div>
+
+        {/* You were invited */}
+        <div className="ref-line ref-l1" style={{
+          fontFamily: "'DM Sans', sans-serif",
+          fontSize: 11, fontWeight: 700, letterSpacing: "0.15em",
+          textTransform: "uppercase", color: "#c9963c", marginBottom: 20
+        }}>
+          Personal Invitation
+        </div>
+
+        {/* Main message */}
+        <h1 className="ref-line ref-l2" style={{
+          fontFamily: "'Instrument Serif', Georgia, serif",
+          fontSize: "clamp(32px, 6vw, 52px)",
+          fontWeight: 400, fontStyle: "italic",
+          color: "#f0ede6", lineHeight: 1.15,
+          letterSpacing: "-0.02em", marginBottom: 24
+        }}>
+          {referrerName ? `${referrerName} thinks you belong in the room.` : "You've been personally invited."}
+        </h1>
+
+        {/* Supporting copy */}
+        <p className="ref-line ref-l3" style={{
+          fontFamily: "'DM Sans', sans-serif",
+          fontSize: 17, lineHeight: 1.75,
+          color: "#7a6e64", fontWeight: 300,
+          marginBottom: 16, maxWidth: 440, margin: "0 auto 16px"
+        }}>
+          {referrerName
+            ? `${referrerName} saved you a spot in the SkipTheLine founding cohort — a hand-selected group of 300 professionals getting direct access to hiring managers at companies that are actively hiring right now.`
+            : "Someone saved you a spot in the SkipTheLine founding cohort — a hand-selected group of 300 professionals getting direct access to hiring managers at companies that are actively hiring right now."
+          }
+        </p>
+
+        <p className="ref-line ref-l4" style={{
+          fontFamily: "'DM Sans', sans-serif",
+          fontSize: 15, lineHeight: 1.7,
+          color: "#5a5248", fontWeight: 300,
+          marginBottom: 44
+        }}>
+          No applications. No ATS. No waiting in the dark. Just a real conversation with the person who can say yes.
+        </p>
+
+        {/* CTA */}
+        <div className="ref-line ref-l5">
+          <button
+            className="ref-btn"
+            onClick={handleContinue}
+            style={{
+              fontFamily: "'DM Sans', sans-serif",
+              padding: "16px 48px",
+              background: "#c9963c",
+              color: "#0d0c09",
+              border: "none",
+              borderRadius: 8,
+              fontSize: 16,
+              fontWeight: 700,
+              cursor: "pointer",
+              letterSpacing: "0.01em",
+              boxShadow: "0 4px 32px rgba(201,150,60,0.35)",
+              display: "block",
+              margin: "0 auto 20px"
+            }}
+          >
+            Claim my spot →
+          </button>
+          <p style={{
+            fontFamily: "'DM Sans', sans-serif",
+            fontSize: 12, color: "#3a3428"
+          }}>
+            Founding cohort · 127 spots remaining · completely free
+          </p>
+        </div>
+
+      </div>
+    </div>
+  );
+};
+
 export default function App() {
   const [page, setPage] = useState("landing"); // "landing" | "candidate" | "hiring"
+
+  // Detect inbound referral code — show welcome screen if present
+  const inboundRef = getInboundRef();
+  const [showWelcome, setShowWelcome] = useState(!!inboundRef);
+
+  if (showWelcome) {
+    return (
+      <ReferralWelcome
+        refCode={inboundRef}
+        onContinue={() => {
+          setShowWelcome(false);
+          setPage("candidate");
+        }}
+      />
+    );
+  }
 
   return (
     <div style={{ background: "#0d0c09", minHeight: "100vh" }}>
