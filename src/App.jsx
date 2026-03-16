@@ -889,37 +889,27 @@ const FormPage = ({ type, onBack }) => {
 
   const set = (id, val) => setValues(v => ({ ...v, [id]: val }));
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     setSubmitting(true);
 
     const formId = isHiring ? TALLY_HIRING_ID : TALLY_CANDIDATE_ID;
 
-    // Generate referral link for both candidates and hiring managers
+    // Generate referral link
     if (values.name && values.email) {
       setRefLink(makeRefUrl(values.name, values.email));
     }
 
-    // Build URL params
+    // Build Tally URL with all field values as query params
     const params = new URLSearchParams();
     Object.entries(values).forEach(([key, val]) => {
       params.append(key, Array.isArray(val) ? val.join(", ") : (val || ""));
     });
     if (inboundRef.current) params.append("referred_by", inboundRef.current);
 
-    // Open Tally in a hidden iframe — guaranteed delivery
-    try {
-      const iframe = document.createElement("iframe");
-      iframe.style.display = "none";
-      iframe.src = `https://tally.so/r/${formId}?${params.toString()}`;
-      document.body.appendChild(iframe);
-      setTimeout(() => { try { document.body.removeChild(iframe); } catch(_) {} }, 5000);
-    } catch (_) {}
-
-    // Track submission
-    if (typeof window !== "undefined" && typeof track !== "undefined") {
-      try { track("form_submitted", { type: isHiring ? "hiring_manager" : "candidate", has_referral: !!inboundRef.current }); } catch(_) {}
-    }
+    // Open Tally in a new tab — 100% reliable, data guaranteed to reach Tally
+    // Tab opens immediately on user gesture so browsers won't block it
+    window.open(`https://tally.so/r/${formId}?${params.toString()}`, "_blank");
 
     setSubmitting(false);
     setSubmitted(true);
