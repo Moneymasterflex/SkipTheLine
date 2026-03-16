@@ -129,7 +129,7 @@ const COPY = {
       { id: "hear", label: "How did you hear about SkipTheLine?", type: "select", options: ["Direct outreach from the team", "A colleague recommended it", "LinkedIn", "Other"], required: false }
     ],
     submit: "Apply to join the founding cohort →",
-    disclaimer: "We review every hiring manager application within 24 hours and respond personally. If accepted, you'll receive an onboarding guide and a calendar link to confirm your first session.",
+    disclaimer: "We review every hiring manager application within 48 hours and respond personally. If accepted, you'll receive an onboarding guide and a calendar link to confirm your first session.",
     success: {
       head: "We'll be in touch within 48 hours.",
       sub: "Your application is being reviewed now. If accepted, you'll receive a personal email with your onboarding guide and everything you need to get your first session set up.",
@@ -1009,31 +1009,44 @@ const FormPage = ({ type, onBack }) => {
 
     const formId = isHiring ? TALLY_HIRING_ID : TALLY_CANDIDATE_ID;
 
-    // Generate referral link
-    if (!isHiring && values.name && values.email) {
+    // Generate referral link for both candidates and hiring managers
+    if (values.name && values.email) {
       setRefLink(makeRefUrl(values.name, values.email));
     }
 
     try {
-      // Build form payload
-      const payload = {};
+      // Build URL params with all form values prefilled
+      const params = new URLSearchParams();
       Object.entries(values).forEach(([key, val]) => {
-        payload[key] = Array.isArray(val) ? val.join(", ") : (val || "");
+        params.append(key, Array.isArray(val) ? val.join(", ") : (val || ""));
       });
-      if (inboundRef.current) payload["referred_by"] = inboundRef.current;
+      if (inboundRef.current) params.append("referred_by", inboundRef.current);
 
-      // Submit to Tally's embed endpoint — silent background POST, no redirect
-      const formData = new FormData();
-      Object.entries(payload).forEach(([k, v]) => formData.append(k, v));
+      // Open Tally in background — guaranteed data capture, no duplicate entry
+      const tallyUrl = `https://tally.so/r/${formId}?${params.toString()}`;
 
-      await fetch(`https://tally.so/r/${formId}`, {
-        method: "POST",
-        mode: "no-cors",
-        body: formData,
-      });
-    } catch (_) {
-      // no-cors always throws — submission still goes through
-    }
+      // For hiring managers — open Tally invisibly via hidden iframe
+      // For candidates — silent fetch attempt first
+      if (isHiring) {
+        const iframe = document.createElement("iframe");
+        iframe.style.display = "none";
+        iframe.src = tallyUrl;
+        document.body.appendChild(iframe);
+        setTimeout(() => document.body.removeChild(iframe), 5000);
+      } else {
+        const formData = new FormData();
+        Object.entries(values).forEach(([key, val]) => {
+          if (Array.isArray(val)) val.forEach(v => formData.append(key, v));
+          else formData.append(key, val || "");
+        });
+        if (inboundRef.current) formData.append("referred_by", inboundRef.current);
+        await fetch(`https://tally.so/r/${formId}`, {
+          method: "POST",
+          mode: "no-cors",
+          body: formData,
+        });
+      }
+    } catch (_) {}
 
     // Track submission event
     track("form_submitted", {
@@ -1090,10 +1103,26 @@ const FormPage = ({ type, onBack }) => {
             </div>
           )}
 
-          {/* HM thank-you note */}
+          {/* HM thank-you note + referral link */}
           {isHiring && (
-            <div style={{ marginBottom: 28, padding: 20, background: "rgba(42,157,143,0.05)", border: "1px solid rgba(42,157,143,0.2)", borderRadius: 10, fontSize: 14, color: "#9a8a72", lineHeight: 1.65, textAlign: "left" }}>
-              {s.note}
+            <div style={{ marginBottom: 28 }}>
+              <div style={{ padding: 20, background: "rgba(42,157,143,0.05)", border: "1px solid rgba(42,157,143,0.2)", borderRadius: 10, fontSize: 14, color: "#9a8a72", lineHeight: 1.65, textAlign: "left", marginBottom: 16 }}>
+                {s.note}
+              </div>
+              {refLink && (
+                <div style={{ padding: 20, background: "rgba(201,150,60,0.05)", border: "1px solid rgba(201,150,60,0.2)", borderRadius: 12, textAlign: "left" }}>
+                  <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, fontWeight: 700, color: "#c9963c", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>Your referral link</div>
+                  <p style={{ fontSize: 13, color: "#7a6e64", lineHeight: 1.6, marginBottom: 14 }}>You were hand-selected for a reason. So was everyone else in this room. If you know a hiring manager who raises the bar, send them this. The cohort is only as strong as the people in it.</p>
+                  <div style={{ display: "flex", gap: 8, alignItems: "stretch" }}>
+                    <div style={{ flex: 1, padding: "10px 14px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, fontSize: 12, color: "#9a9080", fontFamily: "monospace", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {refLink}
+                    </div>
+                    <button onClick={copyRef} style={{ padding: "10px 18px", background: copied ? "rgba(34,197,94,0.15)" : "#c9963c", color: copied ? "#22c55e" : "#0d0c09", border: copied ? "1px solid rgba(34,197,94,0.4)" : "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", whiteSpace: "nowrap", transition: "all .2s", flexShrink: 0 }}>
+                      {copied ? "✓ Copied" : "Copy link"}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
