@@ -1,91 +1,71 @@
-<!-- Primary Meta Tags -->
-<title>SkipTheLine | Talk First. Hire Faster.</title>
-<meta name="description" content="SkipTheLine connects job seekers directly with hiring managers — before the application, before the ATS, before the gatekeeping. Join the conversation-first hiring revolution." />
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<!-- Open Graph -->
-<meta property="og:type" content="website" />
-<meta property="og:url" content="https://skiptheline.us/" />
-<meta property="og:title" content="SkipTheLine | Talk First. Hire Faster." />
-<meta property="og:description" content="Stop applying into the void. SkipTheLine lets you talk to hiring managers directly — before the resume screening, before the ghosting." />
-<meta property="og:image" content="https://skiptheline.us/og-image.png" />
+    <!-- Primary Meta Tags -->
+    <title>SkipTheLine | Talk First. Hire Faster.</title>
+    <meta name="description" content="SkipTheLine connects job seekers directly with hiring managers — before the application, before the ATS, before the gatekeeping. Join the conversation-first hiring revolution." />
 
-<!-- Twitter/X Card -->
-<meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="SkipTheLine | Talk First. Hire Faster." />
-<meta name="twitter:description" content="Stop applying into the void. SkipTheLine lets you talk to hiring managers directly — before the resume screening, before the ghosting." />
-<meta name="twitter:image" content="https://skiptheline.us/og-image.png" />
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://skiptheline.us/" />
+    <meta property="og:title" content="SkipTheLine | Talk First. Hire Faster." />
+    <meta property="og:description" content="Stop applying into the void. SkipTheLine lets you talk to hiring managers directly — before the resume screening, before the ghosting." />
+    <meta property="og:image" content="https://skiptheline.us/og-image.png" />
 
-<!-- Schema Markup -->
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@graph": [
+    <!-- Twitter/X Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="SkipTheLine | Talk First. Hire Faster." />
+    <meta name="twitter:description" content="Stop applying into the void. SkipTheLine lets you talk to hiring managers directly — before the resume screening, before the ghosting." />
+    <meta name="twitter:image" content="https://skiptheline.us/og-image.png" />
+
+    <!-- Schema Markup -->
+    <script type="application/ld+json">
     {
-      "@type": "Organization",
-      "name": "SkipTheLine",
-      "url": "https://skiptheline.us",
-      "logo": "https://skiptheline.us/logo.png",
-      "description": "SkipTheLine is a conversation-first hiring platform that connects job seekers directly with hiring managers before the traditional application process.",
-      "foundingDate": "2024",
-      "founder": {
-        "@type": "Person",
-        "name": "Brandy"
-      },
-      "sameAs": [
-        "https://www.linkedin.com/company/skiptheline",
-        "https://www.tiktok.com/@skiptheline"
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "name": "SkipTheLine",
+          "url": "https://skiptheline.us",
+          "logo": "https://skiptheline.us/logo.png",
+          "description": "SkipTheLine is a conversation-first hiring platform that connects job seekers directly with hiring managers before the traditional application process.",
+          "foundingDate": "2024",
+          "founder": {
+            "@type": "Person",
+            "name": "Brandy"
+          },
+          "sameAs": [
+            "https://www.linkedin.com/company/skiptheline",
+            "https://www.tiktok.com/@skiptheline"
+          ]
+        },
+        {
+          "@type": "WebSite",
+          "name": "SkipTheLine",
+          "url": "https://skiptheline.us"
+        },
+        {
+          "@type": "SoftwareApplication",
+          "name": "SkipTheLine",
+          "applicationCategory": "BusinessApplication",
+          "operatingSystem": "Web",
+          "description": "A hiring platform where job seekers connect directly with hiring managers before applying.",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          },
+          "url": "https://skiptheline.us"
+        }
       ]
-    },
-    {
-      "@type": "WebSite",
-      "name": "SkipTheLine",
-      "url": "https://skiptheline.us"
-    },
-    {
-      "@type": "SoftwareApplication",
-      "name": "SkipTheLine",
-      "applicationCategory": "BusinessApplication",
-      "operatingSystem": "Web",
-      "description": "A hiring platform where job seekers connect directly with hiring managers before applying.",
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "USD"
-      },
-      "url": "https://skiptheline.us"
     }
-  ]
-}
-</script>
-```
-
-**Step 4: Save the file**
-1. Scroll down to the bottom of the page
-2. You'll see a section called **"Commit changes"**
-3. In the first box, type: `Add meta tags and schema markup for SEO`
-4. Make sure **"Commit directly to the main branch"** is selected
-5. Click the green **"Commit changes"** button
-
----
-
-## Part 2: Add the robots.txt File
-
-**Step 1: Go back to your repo's main page**
-1. Click your repo name at the top to go back to the file list
-
-**Step 2: Navigate to the public folder**
-1. Look for a folder called `public` and click into it
-2. If you don't see a `public` folder, stay on the main repo page
-
-**Step 3: Create the robots.txt file**
-1. Click **"Add file"** then **"Create new file"**
-2. In the filename box at the top, type: `public/robots.txt`
-3. In the big text area below, paste this:
-```
-User-agent: *
-Allow: /
-
-Disallow: /api/
-Disallow: /_next/
-
-Sitemap: https://skiptheline.us/sitemap.xml
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
