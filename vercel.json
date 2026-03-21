@@ -1,8 +1,0 @@
-{
-  "rewrites": [
-    {
-      "source": "/labor-pulse",
-      "destination": "/labor-pulse/index.html"
-    }
-  ]
-}
