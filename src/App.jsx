@@ -1,3 +1,4 @@
+import LaborPulse from './LaborPulse';
 import { useState, useEffect, useRef } from "react";
 import { Analytics, track } from "@vercel/analytics/react";
 // Labor Pulse Map redirect
@@ -1222,7 +1223,15 @@ export default function App() {
   // Detect inbound referral code — show welcome screen if present
   const inboundRef = getInboundRef();
   const [showWelcome, setShowWelcome] = useState(!!inboundRef);
-
+if (window.location.pathname.startsWith('/labor-pulse')) {
+  return (
+    <iframe
+      src="/labor-pulse/index.html"
+      style={{ position:'fixed', top:0, left:0, width:'100%', height:'100%', border:'none', zIndex:9999 }}
+      title="SkipTheLine Labor Pulse Map"
+    />
+  );
+}
   if (showWelcome) {
     return (
       <ReferralWelcome
