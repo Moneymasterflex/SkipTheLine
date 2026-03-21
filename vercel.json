@@ -1,8 +1,8 @@
 {
-  "routes": [
+  "rewrites": [
     {
-      "src": "/labor-pulse",
-      "dest": "/labor-pulse/index.html"
+      "source": "/labor-pulse",
+      "destination": "/labor-pulse/index.html"
     }
   ]
 }
