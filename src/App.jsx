@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { Analytics, track } from "@vercel/analytics/react";
-
+// Labor Pulse Map redirect
+if (window.location.pathname === '/labor-pulse' || window.location.pathname === '/labor-pulse/') {
+  window.location.replace('/labor-pulse/index.html');
+}
 // ─────────────────────────────────────────────────────────────────────────────
 // CONFIG
 // Formspree endpoints — create free forms at formspree.io
