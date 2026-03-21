@@ -1,5 +1,16 @@
 {
   "rewrites": [
-    { "source": "/labor-pulse", "destination": "/labor-pulse/index.html" }
+    {
+      "source": "/labor-pulse",
+      "destination": "/labor-pulse/index.html"
+    },
+    {
+      "source": "/labor-pulse/(.*)",
+      "destination": "/labor-pulse/index.html"
+    },
+    {
+      "source": "/((?!labor-pulse).*)",
+      "destination": "/index.html"
+    }
   ]
 }
